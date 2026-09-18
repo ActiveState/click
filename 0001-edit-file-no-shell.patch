@@ -1,0 +1,23 @@
+--- a/src/click/_termui_impl.py
++++ b/src/click/_termui_impl.py
+@@ -448,6 +448,7 @@
+         return "vi"
+
+     def edit_file(self, filename):
++        import shlex
+         import subprocess
+
+         editor = self.get_editor()
+@@ -458,8 +459,11 @@
+         else:
+             environ = None
+         try:
++            # No shell=True / string interpolation: filenames with shell
++            # metacharacters (e.g. `"; rm -rf / ; echo "`) can no longer
++            # inject commands. PYSEC-2026-2132 / CVE-2026-7246.
+             c = subprocess.Popen(
+-                '{} "{}"'.format(editor, filename), env=environ, shell=True,
++                shlex.split(editor) + [filename], env=environ,
+             )
+             exit_code = c.wait()
+             if exit_code != 0:
